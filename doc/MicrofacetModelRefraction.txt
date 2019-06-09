@@ -1,0 +1,235 @@
+# はじめに
+[Microfacet Model for Refraction through Rough Surfaces](https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html)についてまとめます. 論文自体はimportance samplingについでですが, microfacetの要約が簡潔にまとまっていると思います.
+
+# Microfacet Model for Refraction through Rough Surfaces
+## Microfacet Theory
+### BSDF (Bidirectional Scattering Distribution Function)
+BSDFとは, 入射方向$\boldsymbol{i}$からの放射照度と出射方向$\boldsymbol{o}$へ放射される放射輝度の比率である. $f_{s}(i, o, n)$と表し, $\boldsymbol{n}$はローカルサーフェスの法線である.
+反射と透過に分割した場合, それぞれBRDR, BRTFと呼ばれる. すなわち, $f_{s} = f_{r} + f_{t}$ である.
+
+定義
+* 放射束 (radiant flux) ($W$): ある面を単位時間あたりに通過する放射エネルギー.
+* 放射照度 (irradiance) ($W/m^{2}$): 単位時間あたりに照射される, 面積あたりの放射エネルギー.
+* 放射輝度 (radiance) ($W/sr/m^{2}$): ある点からある方向へ放出される放射束.
+
+### Microfacet Models
+マイクロサーフェスの細かな凹凸は, 完全な反射（透過）特性を持った微小平面の集合として表現する. マイクロサーフェスの特徴は２つの統計量を用いて, マクロサーフェスとして簡略化される. ２つの統計量は, マイクロファセット（の法線）の分布$D$と幾何減衰関数$G$である. 一般的には一度の反射（透過）だけ扱う. 次に$D$と$G$を定義する.
+![enter image description here](https://lh3.googleusercontent.com/pGmP7sqrdH5aMa68S4Z-DNQVCJfT3ESJHaUzbd3T3RJVcjvSTn7TP4snpOgmb2999u-pN_X924wc "Microsurface and Macrosurface")
+
+### Microfacet Distribution Function $D$
+マイクロファセットの法線分布$D(m)$を定義する.
+方向$m$上の微小立体角を$d\omega_{m}$, マクロサーフェス上の微小面を$dA$とすると, $D(m)d\omega_{m}dA$は, 法線が立体角方向と一致するマイクロファセットの合計の面積を表す. $D$は単位1/ステラジアンの密度関数である.
+$D$は少なくとも以下を満たす.
+* 0以上
+	* $0 \leq D(m) \leq \infty$
+* マイクロファセットの総面積は少なくとも, 対応するマクロファセットの面積に等しい
+	* $1 \leq D(cm)d\omega_{m}$
+* マイクロファセットの符号付き投影面積は, 任意の方向$v$のマクロサーフェスの投影面積を等しい
+	* $(v \cdot n) = \int D(m)(v \cdot m)d\omega_{m}$
+	* $v=n$の場合,
+		* $1 = \int D(m)$
+
+### Shadowing Masking Function G
+幾何減衰関数$G(i,o,m)$は, マイクロファセット上の法線$m$の点が入出射両方向から可視である割合を表す.
+遮蔽はgrazing angleや極度に荒いサーフェスでしか強く表れないが, エネルギー保存測を満たすために必要である
+![enter image description here](https://lh3.googleusercontent.com/_e1kxvk5WvOCvFLP9uKQ4yx_XfTLSrMv9V56tvIh0onMSJ0odm67ICv17NyZu5svObqUnY_tRYgs "ShadowMasking")
+$G$は以下を満たす.
+* 0以上1以下
+	* $0 \leq G(i,o,m) \leq 1$
+* 入出射方向に対して対象
+	* $G(i,o,m)=G(o,i,m)$
+* 表面側から裏面は見えない（その逆も同様）
+	* $G(i,o,m)=0 in (i \cdot m)(i \cdot n) \leq or (o \cdot m)(o \cdot n) \leq 0$
+
+### マイクロサーフェスBSDFの積分
+BSDFの積分は, マイクロサーフェスの可視部分からの放射を積分する. 放射の割合はマイクロサーフェスのBSDF$f_{s}^{m}$によって決まり, 可視部分の割合は$D$と$G$の積で決まる.
+放射照度と放射輝度は, それぞれ入射と出射方向への投影面積で計算される.
+$$f_{s}(i,o,n) = \int |\frac{i \cdot m}{i \cdot n}|f_{s}^{m}(i,o,m)|\frac{o \cdot m}{o \cdot n}|G(i,o,m)D(m)dw_{m} \tag{1}$$
+マイクロサーフェスが局所的に滑らかと仮定すると, $f_{s}^{m}$は, 理想的な鏡面反射と理想的なSnellの法則に従う透過の, 総和とFresnel項$F$で決まる減衰の乗算になる.
+
+## マイクロサーフェススペキュラー BSDF
+多くのマイクロファセットモデルが理想のスペキュラー反射を仮定する. このとき, マイクロサーフェスは極小の鏡の集まりのように振る舞い, この極小の鏡のことをマイクロファセットと呼ぶ.
+一般化したスペキュラーBSDFは, 入射方向$i$からのエネルギーを, ひとつの方向$s$へ, $\rho$の割合いで放射する関数になる. $\rho$と$s$は, $i$と$m$の関数になる.
+$$f_{s}^{m}(i,o,m) = \rho\frac{\delta_{\omega_{o}}(s,o)}{|o \cdot m|}\tag{2}$$
+$\delta_{\omega_{o}}$はディラックのデルタ関数で, $s=0$で$\infin$, それ以外はゼロである.
+任意の$i$と$o$で, 高々ひとつのマイクロサーフェス法線で反射すると仮定すると, その法線は$h(i,o)$で計算できる. この法線をハーフディレクションと呼ぶ.
+$(2)$をハーフディレクション$h$で書き直すと,
+$$f_{s}^{m}(i,o,m)=\rho(i,m)\frac{\delta_{\omega_{m}}(h(i,o),m)}{|o \cdot m|}||\frac{\partial \omega_{h}}{\partial \omega_{o}}|| \tag{3}$$
+$||\frac{\partial \omega_{h}}{\partial \omega_{o}}||$はヤコビ行列の行列式で, 省略してヤコビアンと呼ばれる. ヤコビアンは多変量の微分であり, $\omega_{h}$の$\omega_{o}$に対する微分値である.
+
+### 理想的な反射$f_{r}^{m}$
+理想的な反射を考えたとき, ハーフベクトル$h_{r}$は,
+$h_{r}=h_{r}(i,o)=\frac{\vec{h_{r}}}{||\vec{h_{r}}||}$
+$\vec{h_{r}}=sign(i \cdot n)(i+o)$
+$||\frac{\partial \omega_{h_{r}}}{\partial \omega_{o}}|| = \frac{|o \cdot h_{r}|}{||\vec{h_{r}}||^{2}}=\frac{1}{4|o \cdot h_{r}|}$
+
+![enter image description here](https://lh3.googleusercontent.com/RPCncdwUZfrzCpmNUOQA2qKXU4FOwl5pW4aeA8HtLncL5EOZ1XUafikjzra8ZTwpa6dEEAWCV0rF=s256 "Geometry for ideal reflection with half-vector")
+
+$\rho$をフレネル$F$にすると, 式$(3)$は,
+$$f_{r}^{m}(i,o,m)=F(i,m)\frac{\delta_{\omega_{m}}(h_{r},m)}{4(i \cdot h_{r})^{2}} \tag{4}$$
+ヤコビアン項があるため, $f_{r}^{m}$は$|i \cdot h_{r}|$に反比例に減少する. これは現実に即している.
+
+### 理想的な透過$f_{t}^{m}$
+スネルの法則の屈折率を$\eta_{i}$, $\eta_{o}$とすると,
+
+$$h_{t}=h_{t}(i,o)=\frac{\vec{h_{t}}}{\vec{||h_{t}}||} \ where \ \vec{h_{t}} = -(\eta_{i}i + \eta_{o}o) \tag{5}$$
+
+$\eta_{i} \neq \eta_{o}$と仮定する. 対応するヤコビアンは,
+
+$$||\frac{\partial \omega_{h_{t}}}{\partial \omega_{o}}|| = \frac{\eta_{o}^{2}|o \cdot h_{t}|}{||\vec{h_{t}}||^{2}}=\frac{\eta_{o}^{2}|o \cdot h_{t}|}{(\eta_{i}(i \cdot h_{t}) + \eta_{o}(o \cdot h_{t}))^{2}} \tag{6}$$
+
+光が吸収されないと仮定すると, $\rho$は$1-F$となり, 透過の場合のBSDFは,
+
+$$f_{t}^{m}(i,o,m)=(1-F(i,m))\frac{\delta_{\omega_{m}}(h_{t},m)\eta_{o}^{2}}{(\eta_{i}(i \cdot h_{t}) + \eta_{o}(o \cdot h_{t}))^{2}} \tag{7}$$
+
+BTDFは相反性がなく, $f_{t}^{m}(i,o,m)/\eta_{o}^{2}=f_{t}^{m}(o,i,m)/\eta_{i}^{2}$である. BTDFはグレイジングアングルに近づくほど増加し, そのためオフスペキュラーなピークが生じる[1](#1).
+
+<span id="1" style="font-size:x-small">1. 正反射方向からずれた方向にスペキュラーのピークがあることを, オフスペキュラーと呼ぶ.</span>
+
+## 粗い面のBSDF
+マイクロサーフェスのBSDFと式$(1)$を使うと, BSDF $f_{s}$を導くことができる. BSDFはBRDFとBTDFの和であるから,
+
+$$f_{s}(i,o,m) = f_{r}(i,o,m) + f_{t}(i,o,m)$$
+
+反射の項は,
+
+$$f_{r}(i,o,n)=\frac{F(i,h_{r})G(i,o,h_{r})D(h_{r})}{4|i \cdot n||o \cdot n|} \tag{8}$$
+
+分母の$\pi$が4になっていること以外, Cook-TorranceのBSDFと同じである.
+透過の項は,
+
+$$f_{t}(i,o,n)=\frac{|i \cdot h_{t}||o \cdot h_{t}|}{|i \cdot n||o \cdot n|}\frac{\eta_{o}^{2}(1-F(i,h_{t}))G(i,o,h_{t})D(h_{t})}{(\eta_{i}(i \cdot h_{t}) + \eta_{o}(o \cdot h_{t}))^{2}} \tag{9}$$
+
+### F, D, Gの選択
+フレネル項は次のようになる.
+
+$$F(i,m)=\frac{1}{2}\frac{(g-c)^{2}}{(g+c)^{2}}(1+\frac{(c(g+c)-1)^{2}}{(c(g-c)+1)^{2}}) \tag{10}$$
+$$where \  g=\sqrt{\frac{\eta_{t}^{2}}{\eta_{i}^{2}}-1+c^{2}} \  and \  c=|i \cdot m|$$
+
+フレネル項$F$のより簡単な近似式も知られている \[[CT82](#CT82), [Sch94](#Sch94)\].
+
+$$F(\theta)=R_{0}+(1-R_{0})(1-cos\theta)^5 \  where \ R_{0}=(\frac{\eta_{1}-\eta_{2}}{\eta_{1}+\eta_{2}})^2$$
+
+マイクロファセット法線分布関数$D$について, 本論文ではBeckmann, Phong, GGXについて論じる.
+幾何減衰関数$G$は$D$に依存する. ここでは, Smithの近似を用いる \[[Smi67](#Smi67)\]. Smithの$G$は, １方向の関数$G_{1}$の積で近似することができる.
+
+$$G(i,o,m) \approx G_{1}(i,m)G_{1}(o,m)$$
+$G_{1}$は$D$から導かれる (\[[Smi67](#Smi67), [Bro80](#Bro80), [BBS02](#BBS02)\], と付録A).
+
+### 分布関数と関連する関数
+法線分布関数Beckmann, GGXについて, Smithの幾何減衰関数$G_{1}$とサンプリング関数ともに述べる. サンプリング関数は, ２つの$[0,1)$に一様分布する乱数$\xi_{1}$と$\xi_{2}$からマイクロサーフェスの法線を生成する関数です. サンプリング関数が$m$を生成する確率は次の式で与えられます.
+
+$$p_{m}(m)=D(m)|m \cdot n|$$
+
+以降, $\theta_{m}$は$m$と$n$間の角度, $\theta_{v}$は$v$と$n$間の角度, $\chi^{+}(a)$は正数を表す特性関数です (つまり, a>0なら1, a<=0なら0). また, 全ての$D$は$m \cdot n \leq 0$なら$D(m)=0$で, 異方性のバリエーションは考えません.
+
+#### Beckmann Distribution
+Beckmann分布は幅のパラメータ$\alpha_{b}$とすると,
+
+$$D(m)=\frac{\chi^{+}(m \cdot n)}{\pi\alpha_{b}^{2}cos^{4}\theta_{m}}e^{\frac{-tan^{2}\theta_{m}}{\alpha_{b}^{2}}} \tag{11}$$
+$$G_{1}(v,m)=\chi^{+}(\frac{v \cdot m}{v \cdot n})\frac{2}{1+erf(a)+\frac{1}{a\sqrt{\pi}}e^{-a^{2}}} \tag{12}$$
+$$with \ a=(\alpha_{b}tan\theta_{v})^{-1}$$
+
+誤差関数$erf(x)=\frac{2}{\sqrt{\pi}}\int_{0}^{x}e^{-x^{2}}dx$は高価だが,  Schlick\[[Sch94](#Sch94)\]は上記Smithの幾何減衰関数の近似を示している.
+
+$$G_{1}(v,m) \approx \chi^{+}(\frac{v \cdot m}{v \cdot n})=\begin{cases}\frac{3.535a + 2.181a^{2}}{1+2.276a+2.577a^{2}} & if \ a<1.6\\1 & otherwise\end{cases} \tag{13}$$
+
+分布関数のサンプル$D(m)|m \cdot n|$は,
+$$\begin{array}{ll}
+\theta_{m}=arctan\sqrt{-\alpha_{b}^{2}log(1-\xi_{1})} & (14)\\
+\phi_{m}=2\pi\xi_{2} & (15)
+\end{array}$$
+
+#### GGX Distribution
+GGX分布は幅のパラメータ$\alpha_{g}$とすると,
+
+$$D(m)=\frac{\alpha_{g}^{2}\chi^{+}(m \cdot n)}{\pi cos^{4}\theta_{m}(\alpha_{g}^{2} + tan^{2}\theta_{m})^{2}} \tag{16}$$
+
+式変形すると,
+$$D(m)=\frac{\alpha_{g}^{2}\chi^{+}(m \cdot n)}{\pi ((\alpha_{g}^{2}-1)cos^{2}\theta + 1)^{2}} \tag{17}$$
+
+$$G_{1}(v,m)=\chi^{+}(\frac{v \cdot m}{v \cdot n})\frac{2}{1+\sqrt{1+\alpha_{g}^{2}tan^{2}\theta_{v}}} \tag{18}$$
+
+分布関数のサンプル$D(m)|m \cdot n|$は,
+$$\begin{array}{ll}
+\theta_{m}=arctan(\frac{\alpha_{g}\sqrt{\xi_{1}}}{\sqrt{1-\xi_{1}}}) & (19)\\
+\theta_{m}= arccos\sqrt{\frac{1-\xi_{1}}{\xi_{1}(\alpha_{g}^{2}-1)+1}}& (20)\\
+\phi_{m}=2\pi\xi_{2} & (21)
+\end{array}$$
+
+### 重み
+サンプリングの重み係数は,
+$$weight(o) = \frac{f_{s}(i,o,n)|o \cdot n|}{p_{o}(o)} \tag{22}$$
+$$p_{o}(o)=p_{m}(m)||\frac{\partial\omega_{h}}{\partial\omega_{o}}|| \tag{23}$$
+
+反射方向$o_{r}$は,
+$$o_{r}=2|i \cdot m|m-i$$
+透過方向$o_{t}$は,
+$$\begin{array}{l}
+o_{t}=(\eta c-sign(i \cdot n)\sqrt{1+\eta(c^{2}-1)}m-\eta i\\
+with \ c=(i \cdot m) \ and \  \eta=\eta_{i}/\eta_{t}
+\end{array}$$
+
+反射と透過どちらの場合も重み係数は次のようになる.
+
+$$weight(o) = \frac{f_{s}(i,o,n)|o \cdot n|}{p_{o}(o)} = \frac{|i \cdot m|G(i,o,m)}{|i \cdot n||m \cdot n|} \tag{24}$$
+
+この重みは, パラメータによってはグレイジングアングル付近で, 過大な値になることがある.
+
+## 参照
+<span id="CT82">[CT82]</span> COOK R. L., TORRANCE K. E.: A reflectance model for computer graphics. ACM Transactions on Graphics 1, 1 (Jan. 1982), 7–24.
+<span id="Sch94">[Sch94]</span> SCHLICK C.: An inexpensive BRDF model for physically-based rendering. Computer Graphics Forum 13, 3 (1994), 233–246.
+<span id="Smi67">[Smi67]</span>  SMITH B. G.: Geometrical shadowing of a random rough surface. IEEE Trans. on Antennas and Propagation (1967), 668–671.
+<span id="Bro80">[Bro80]</span> BROWN G. S.: Shadowing by non-Gaussian random surfaces. IEEE Trans. on Antennas and Propagation 28 (Nov. 1980), 788–790.
+<span id="BBS02">[BBS02]</span> BOURLIER C., BERGINC G., SAILLARD J.: One- and two-dimensional shadowing functions for any height and slope stationary uncorrelated surface in the monostatic and bistatic configurations. IEEE Trans. on Antennas and Propagation 50 (Mar. 2002), 312–324.
+[GRAPHICS]https://agraphicsguy.wordpress.com/2015/11/01/sampling-microfacet-brdf/
+[FRANKE]https://www.tobias-franke.eu/log/2014/03/30/notes_on_importance_sampling.html
+
+## 付録A: Smithの幾何学減衰関数$G_{1}$の導出
+## 付録B: 法線分布関数$D$のサンプル
+### 逆関数法
+ある確率分布$P(x)$に従う乱数を, 一様分布に従う乱数から生成する方法である.
+$U$が一様分布に従うとすると,
+$$P(U \le u) = u \  (0 \le u \le 1)$$
+$P(x)$の累積分布関数を$F(x)$とすると,
+$$U \le u \Leftrightarrow F^{-1}(U) \le F^{-1}(u)$$
+が成り立つため, 次も成り立つ.
+$$P(F^{-1}(U) \le F^{-1}(u)) = u$$
+$F^{-1}(u)=x$とおくと,
+$$P(F^{-1}(U) \le x) = F(x)$$
+$F^{-1}(U)$は累積分布関数が$F(x)$となる確率分布$P(x)$に従う.
+
+### GGX
+分布関数を半球面で積分したいので, 立体角方向に$cos \theta$で投影し, $sin \theta$をかけて緯度方向に積分する.
+$$D(m)=\frac{\alpha_{g}^{2}\chi^{+}(m \cdot n)}{\pi ((\alpha_{g}^{2}-1)cos^{2}\theta + 1)^{2}} \tag{25}$$ 
+$$p_{h}(\theta, \phi) =\frac{\alpha_{g}^{2}cos \theta sin \theta}{\pi ((\alpha_{g}^{2}-1)cos^{2}\theta + 1)^{2}}$$
+$$\int_{0}^{2 \pi} \int_{0}^{2 \pi}p_{h}(\theta, \phi)d\theta d\phi = \int_{0}^{2 \pi} 2 \pi p_{h}(\theta)d\theta$$
+
+累積分布関数は次のようになる.
+$$\begin{array}{lll}
+P_{h}(\theta)&=&\int_{0}^{\theta} \frac{2 \alpha_{g}^{2} sin(t) cos(t)}{((\alpha_{g}^{2}-1)cos^{2}(t) + 1)^{2}} dt \\
+&=&\int_{\theta}^{0} \frac{\alpha_{g}^{2}}{((\alpha_{g}^{2}-1)cos^{2}(t) + 1)^{2}} d(cos^{2}t) \\
+&=&\frac{\alpha_{g}^{2}}{\alpha_{g}^2-1}\int_{0}^{\theta} d(\frac{1}{(\alpha_{g}^{2}-1)cos^{2}(t) + 1}) \\
+&=&\frac{\alpha_{g}^{2}}{\alpha_{g}^2-1}(\frac{1}{(\alpha_{g}^{2}-1)cos^{2}\theta + 1} - \frac{1}{\alpha_{g}^{2}}) \\
+&=&\frac{\alpha_{g}^{2}}{(\alpha_{g}^{2}-1)^{2}cos^{2}\theta + (\alpha_{g}^{2}-1)} - \frac{1}{\alpha_{g}^{2}-1}
+\end{array}$$
+
+逆関数$P_{h}^{-1}$は次のようになるため,
+$$\begin{array}{lll}
+P_{h}^{-1}&=&\frac{\alpha_{g}^{2}}{(\alpha_{g}^{2}-1)^{2}cos^{2}\theta + (\alpha_{g}^{2}-1)} - \frac{1}{\alpha_{g}^{2}-1}
+\end{array}$$
+
+一様分布にしたがう乱数を$\xi$とすると,
+
+$$\xi = \frac{\alpha_{g}^{2}}{(\alpha_{g}^{2}-1)^{2}cos^{2}\theta + (\alpha_{g}^{2}-1)} - \frac{1}{\alpha_{g}^{2}-1}$$
+$\theta$は次のように計算できる.
+$$\theta = arccos\sqrt{\frac{1-\xi}{\xi(\alpha_{g}^{2}-1)+1}} \  or \  \theta = arctan(\alpha_{g}\sqrt{\frac{\xi}{1-\xi}})$$
+
+# まとめ
+説明はしませんがコードはあげています [Github](https://github.com/taqu/ImportanceSampling).
+レンダリング問題の本質は積分問題であることを説明するために, 上手く活用できないかと考えています.
+<!--stackedit_data:
+eyJoaXN0b3J5IjpbMTEzMjkxNDkwMSwxNDM0MzMwNjMxLDEyMz
+MwNjM3NjYsLTIwNjkxNzc3MTUsMjAwODQ4MzczMSwtNTkwNjEy
+MjU4XX0=
+-->
