@@ -80,6 +80,7 @@ namespace lrender
     static constexpr f32 PI2 = static_cast<f32>(6.28318530717958647692);
     static constexpr f32 INV_PI = static_cast<f32>(0.31830988618379067153);
     static constexpr f32 INV_PI2 = static_cast<f32>(0.15915494309189533576);
+    static constexpr f32 INV_PI4 = static_cast<f32>(0.07957747154594766788);
     static constexpr f32 PI_2 = static_cast<f32>(1.57079632679489661923);
     static constexpr f32 INV_PI_2 = static_cast<f32>(0.63661977236758134308);
     static constexpr f32 LOG2 = static_cast<f32>(0.693147180559945309417);
