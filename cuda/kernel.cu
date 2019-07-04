@@ -215,7 +215,7 @@ namespace
         }
         f32 count = g_constansRender.count_;
         f32 inv = 1.0f/(count + samplesPerStep);
-        screen[row+x] = screen[row+x] * count*inv + r*inv;
+        screen[row+x] = screen[row+x] * (count*inv) + r*inv;
     }
 
     LCUDA_GLOBAL void test_random(int N, float* result, uint4 random)

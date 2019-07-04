@@ -89,11 +89,11 @@ namespace
     LCUDA_HOST LCUDA_DEVICE void orthonormalBasis(float3& binormal0, float3& binormal1, const float3& normal)
     {
         if(fabsf(normal.y)<fabsf(normal.x)){
-            f32 invLen = 1.0f/sqrt(normal.x*normal.x + normal.z*normal.z);
+            f32 invLen = rsqrt(normal.x*normal.x + normal.z*normal.z);
             binormal1 = ::make_float3(normal.z*invLen, 0.0f, -normal.x*invLen);
 
         }else{
-            f32 invLen = 1.0f/sqrt(normal.y*normal.y + normal.z*normal.z);
+            f32 invLen = rsqrt(normal.y*normal.y + normal.z*normal.z);
             binormal1 = ::make_float3(0.0f, normal.z*invLen, -normal.y*invLen);
         }
         binormal0 = cross(binormal1, normal);
@@ -102,11 +102,11 @@ namespace
     LCUDA_HOST LCUDA_DEVICE void orthonormalBasis(float4& binormal0, float4& binormal1, const float4& normal)
     {
         if(fabsf(normal.y)<fabsf(normal.x)){
-            f32 invLen = 1.0f/sqrt(normal.x*normal.x + normal.z*normal.z);
+            f32 invLen = rsqrt(normal.x*normal.x + normal.z*normal.z);
             binormal1 = ::make_float4(normal.z*invLen, 0.0f, -normal.x*invLen, 0.0f);
 
         }else{
-            f32 invLen = 1.0f/sqrt(normal.y*normal.y + normal.z*normal.z);
+            f32 invLen = rsqrt(normal.y*normal.y + normal.z*normal.z);
             binormal1 = ::make_float4(0.0f, normal.z*invLen, -normal.y*invLen, 0.0f);
         }
         binormal0 = cross3(binormal1, normal);
