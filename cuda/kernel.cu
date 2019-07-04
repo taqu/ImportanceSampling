@@ -188,7 +188,7 @@ namespace
 
         f32 fovx = g_constansRender.fovx_;
         f32 fovy = g_constansRender.fovy_;
-        s32 spp = g_constansRender.spp_;
+        s32 samplesPerStep = g_constansRender.samplesPerStep_;
 
         const Ray& camera = g_constansRender.cameraRay_;
         float3 cx = make_float3(fovx, 0.0f, 0.0f);
@@ -196,11 +196,10 @@ namespace
 
         f32 invWidth2 = 2.0f/Width;
         f32 invHeight2 = 2.0f/Height;
-        f32 invSpp = 1.0f/spp;
 
         s32 row = (Height-y-1)*Width;
         float3 r = make_float3(0.0f);
-        for(s32 s = 0; s<spp; ++s){
+        for(s32 s = 0; s<samplesPerStep; ++s){
             //f32 rx = xoshiro128plus_frand(random);
             //f32 ry = xoshiro128plus_frand(random);
             f32 rx = g_constansRender.samples_[s].x;
@@ -214,8 +213,9 @@ namespace
             ray.direction_ = d;
             r += radiance<T>(ray, 16, g_constansRender.roughness_, random, ConstantsRender::NumShapes, g_constansRender.shapes_);
         }
-        r *= invSpp;
-        screen[row+x] += clamp01(r)*g_constansRender.scale_;
+        f32 count = g_constansRender.count_;
+        f32 inv = 1.0f/(count + samplesPerStep);
+        screen[row+x] = screen[row+x] * count*inv + r*inv;
     }
 
     LCUDA_GLOBAL void test_random(int N, float* result, uint4 random)

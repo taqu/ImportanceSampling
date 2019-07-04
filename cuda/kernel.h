@@ -102,8 +102,8 @@ struct ConstantsRender
     lcuda::Ray cameraRay_;
 
     lcuda::f32 roughness_;
-    lcuda::s32 spp_;
-    lcuda::f32 scale_;
+    lcuda::s32 samplesPerStep_;
+    lcuda::s32 count_;
     lcuda::u32 random_;
 
     Shape shapes_[NumShapes];

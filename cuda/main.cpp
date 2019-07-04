@@ -2,6 +2,7 @@
 #include "lcuda.h"
 #include "kernel.h"
 #include <array>
+#include <random>
 
 using namespace lcuda;
 
@@ -89,6 +90,9 @@ int main(int argc, char** argv)
     static const s32 Width = 1024;
     static const s32 Height = 768;
     static const s32 Size = Width*Height;
+    static const s32 SamplesPerPixel = 4096;
+
+    std::random_device device_random;
 
     float3* screen = lcuda::cudaMalloc<float3>(Size);
     float3* screenHost = lcuda::cudaMallocHost<float3>(Size);
@@ -104,9 +108,8 @@ int main(int argc, char** argv)
     constants.cameraRay_ = Ray(make_float3(0.0f, 40.8e-2f, 120e-2f), normalize(make_float3(0.0f, -0.042612f, -1.0f)));
 
     constants.roughness_ = 0.5f;
-    constants.spp_ = ConstantsRender::SamplesPerStep;
-
-    constants.random_ = 12345;
+    s32 spp = (SamplesPerPixel + ConstantsRender::SamplesPerStep -1) & ~(ConstantsRender::SamplesPerStep -1);
+    constants.samplesPerStep_ = ConstantsRender::SamplesPerStep;
 
     //Scene: type, radius, position, normal, emission, color, material
     float3 Zero = make_float3(0.0f);
@@ -121,19 +124,20 @@ int main(int argc, char** argv)
     constants.shapes_[7] = Shape(Shape::Type_Sphere, 20e-2f, make_float3(25e-2f, 20e-2f, 1e-1f), Zero, Zero,make_float3(1,1,1)*.999f, DIFFUSE);//Glas
     constants.shapes_[8] = Shape(Shape::Type_Sphere, 100e-2f, make_float3(0.0f,17.9e-1f, 0.0f), Zero, make_float3(2,2,2), Zero, EMITTER); //Light
 
-    s32 numLoops = 32/constants.spp_;
-    constants.scale_ = 1.0f/numLoops;
+    s32 numLoops = spp/ConstantsRender::SamplesPerStep;
 
     std::array<DistributionType, 4> distributions = {Distribution_Beckmann, Distribution_GGX, Distribution_GGXVND, Distribution_GGXVND2};
     std::array<const char*, 4> filenames = {"beckmann.ppm", "ggx.ppm", "ggx_vnd.ppm", "ggx_vnd2.ppm"};
 
     for(s32 i = 0; i<distributions.size(); ++i){
         cudaMemset(screen, 0, sizeof(float3)*Size);
-        uint4 random = xoshiro128plus_srand(12345);
+        uint4 random = xoshiro128plus_srand(device_random());
+        constants.count_ = 0;
         for(s32 j = 0; j<numLoops; ++j){
             golden_set(constants.samples_, ConstantsRender::SamplesPerStep, random);
             constants.random_ = xoshiro128plus_rand(random);
             kernel_render(screen, 16, constants, distributions[i]);
+            constants.count_ += ConstantsRender::SamplesPerStep;
         }
 
         cudaMemcpy(screenHost, screen, sizeof(float3)*Size, cudaMemcpyDeviceToHost);
